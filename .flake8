@@ -1,0 +1,22 @@
+[flake8]
+ignore =
+	E20,
+	E26,
+	E741,
+	E117,
+	W191  # Mask indentation using Tab error
+
+exclude =
+	__pycache__
+	.git
+	*.pyc
+	*~
+	*.o
+	*.so
+	*.cpp
+	*.cxx
+	*.hpp
+	*.hxx
+	*.c
+	*.h
+

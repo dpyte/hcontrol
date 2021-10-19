@@ -1,0 +1,17 @@
+
+%% import hcont_volt_levels %%
+
+# NOTE: Temperature of the bulb is controlled by the white wire
+@voltage_levels:
+	$hcont_append_volt_levels := [
+		"1.22V",
+		"2.63V",
+		"3.58V",
+		"4.16V",
+		"4.36V",
+		# I will not get into much detail as to why there isn't any record for the
+		# following levels other than I blew up the capacitors ... :(
+		none,
+		none
+	]
+

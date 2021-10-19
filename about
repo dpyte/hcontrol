@@ -1,0 +1,11 @@
+
+Idea behind this project is to use the camera (modules) installed on laptops or even an external camera to control my dimmable lamp
+
+Part list:
+     - uController probably something like esp8266 - x1
+     - Jumper or either a 22 AWG cable - No idea
+     - Raspberry Pi - preferably version 3> and a camera module
+
+TODO:
+    - Map hand gestures to some sort of command
+    - Create a menu to control the temperature and brightness of the lamp - that utilizes hand gesture motions
