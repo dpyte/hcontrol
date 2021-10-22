@@ -35,3 +35,4 @@ a.out
 *.vcd
 config.json
 compile_commands.json
+.sconsign.dblite

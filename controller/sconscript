@@ -1,0 +1,14 @@
+
+import os
+import sys
+
+
+env = env.Clone()
+
+matches = []
+
+for root, dirnames, filenames in os.walk(os.getcwd()):
+    for dn in direnames:
+        env.Append(CPP=[dn])
+        globStr = "%s/*.c*" % dn
+        matches.append(Glob(globStr))
