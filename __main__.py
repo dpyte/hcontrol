@@ -4,8 +4,6 @@ USE_BUILD_HC = True
 
 import cv2
 import mediapipe as mp
-from tracking import coordinates as coo
-from tracking.points import Points
 if USE_BUILD_HC:
 	from build.tracking.exec import HandCoordinates as HC
 
