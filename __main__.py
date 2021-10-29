@@ -48,12 +48,12 @@ def extract_coordinates_from_hand_landmark(hands, lm, i_width, i_height):
 						i_width,
 						i_height
 				)
-				if DEBUG:
-						print('Point: {}\nCoordinates: {}\nLandmarks:\n{}'.format(
-								point,
-								coordinated,
-								normalize)
-						)
+				# if DEBUG != False:
+				# 		print('Point: {}\nCoordinates: {}\nLandmarks:\n{}'.format(
+				# 				point,
+				# 				coordinated,
+				# 				normalize)
+				# 		)
 				# X -> Left & Right
 				# Y -> Down & Up
 				# Z -> Back & foreword

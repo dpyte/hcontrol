@@ -40,7 +40,7 @@ private:
 	};
 
 	bool recv_terminate_signal = false;
-
+	bool coordinates_write_out = true;
 	void async_controller();
 
 public:
@@ -49,13 +49,16 @@ public:
 	void update_values(const pyb::dict &update_values);
 	// Implement some sort of gaurd so that this function is only being called once ...
 	void take_action();
+
+	void enable_coordinates_write_out();
 };
 }
 
 PYBIND11_MODULE(HandCoordinates, m) {
 	pyb::class_<HControl::Coordinates::HandLocation>(m, "HandLocation").def(pyb::init<>())
 		.def("update_values", &HControl::Coordinates::HandLocation::update_values)
-		.def("take_action", &HControl::Coordinates::HandLocation::take_action);
+		.def("take_action", &HControl::Coordinates::HandLocation::take_action)
+		.def("enable_coordinates_write_out", &HControl::Coordinates::HandLocation::enable_coordinates_write_out);
 }
 
 #endif // HCEXECCONTROLLER_HXX

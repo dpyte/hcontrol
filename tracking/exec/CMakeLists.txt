@@ -11,6 +11,7 @@ set (HCLIB HandCoordinates CACHE STRING "program name")
 set (sources
 	HCExecController.hxx    HCExecController.cxx
 	HcCoordinates.hxx		HcCoordinates.cxx
+	HcConfig.hxx
 	HcPoints.hxx
 	)
 

@@ -16,6 +16,8 @@ public:
 	Coordinates();
 	explicit Coordinates(Point pt) noexcept;
 	void append(std::array<unsigned int, 2> const &coord, std::array<float, 3> const &plot_values);
+
+	std::array<float, 3> axis_points() const;
 };
 
 }
