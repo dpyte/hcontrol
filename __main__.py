@@ -1,23 +1,33 @@
 #!/bin/env python
 
+USE_BUILD_HC = True
+
 import cv2
 import mediapipe as mp
 from tracking import coordinates as coo
 from tracking.points import Points
+if USE_BUILD_HC:
+	from build.tracking.exec import HandCoordinates as HC
+
+
+DEBUG = True
 
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
-location = coo.HandLocation()
+location = HC.HandLocation()
 
-DEBUG = True
 
 """
  Idea is to having an asynchronous thread that reads off the data from the
  init function and acts based on the collected data
-"""
 
+ @take_async_action:
+ in HandLocation can be used to trace and create a singular output
+ based on the data collected over the period of n milliseconds
+
+"""
 
 """
 	0: Wrist							1: THUMB_CMC					2: THUMB_IP
@@ -29,6 +39,7 @@ DEBUG = True
 	18: PINKY_PIP					19: PINKY_DIP					20: PINKY_TIP
 """
 
+location.take_action()
 
 def extract_coordinates_from_hand_landmark(hands, lm, i_width, i_height):
 		for point in hands.HandLandmark:
@@ -40,17 +51,20 @@ def extract_coordinates_from_hand_landmark(hands, lm, i_width, i_height):
 						i_height
 				)
 				if DEBUG:
-						if point == 0:
-								print('Point: {}\nCoordinates: {}\nLandmarks:\n{}'.format(
-										point,
-										coordinated,
-										normalize)
-								)
+						print('Point: {}\nCoordinates: {}\nLandmarks:\n{}'.format(
+								point,
+								coordinated,
+								normalize)
+						)
 				# X -> Left & Right
 				# Y -> Down & Up
 				# Z -> Back & foreword
-				x_cord, y_cord, z_cord = normalize.x, normalize.y , normalize.z
-				location.update_value(Points(point), coordinated, x_cord, y_cord, z_cord)
+				values = {
+						"point": int(point),
+						"coordinates": (coordinated),
+						"axis": [normalize.x, normalize.y, normalize.z]
+				}
+				location.update_values(values)
 
 
 def init():
@@ -58,7 +72,7 @@ def init():
 		with mp_hands.Hands(
 				min_detection_confidence=0.9,
 				min_tracking_confidence=0.5
-				) as hands:
+		) as hands:
 				while cap.isOpened():
 						succ, img = cap.read()
 						if not succ:

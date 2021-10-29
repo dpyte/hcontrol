@@ -1,6 +1,10 @@
 #!/bin/env python
 
+from multiprocessing import Process
 from tracking.points import Points
+from numba import jit
+import asyncio
+import time
 
 """
 	0: Wrist							1: THUMB_CMC					2: THUMB_IP
@@ -30,6 +34,9 @@ class Coordinates:
 				self.y_cord = y_cord
 				self.z_cord = z_cord
 
+		def values(self):
+				return self.coordinates, self.x_cord, self.y_cord, self.z_cord
+
 
 class HandLocation:
 		def __set_default_values(self):
@@ -55,11 +62,30 @@ class HandLocation:
 				self.coords[Points.PINKY_DIP] = Coordinates(Points.PINKY_DIP)
 				self.coords[Points.PINKY_TIP] = Coordinates(Points.PINKY_TIP)
 
+
+		"""
+		@__launch_async_proc:
+		- Kinda bad idea but I'll work with it for now ...
+		!TODO:
+		- Other than that, pass this value to a C++ function that will handle all the processing
+		- shenanigans
+		"""
+		def __launch_async_proc(self):
+				while self.event_control:
+					time.sleep(0.1)
+					if self.update is not None:
+							cord, x, y, z = self.coords[self.update].values()
+							print(self.coords[self.update].values())
+					break
+
 		def __init__(self):
 				self.coords = dict()
 				self.__set_default_values()
+				self.event_control = False
+				self.update = None
 
 		def update_value(self, point, coordinates, x_cord, y_cord, z_cord):
+				self.update = point
 				values = {
 						'coordinates': coordinates,
 						'x_cord': x_cord,
@@ -67,3 +93,12 @@ class HandLocation:
 						'z_cord': z_cord,
 				}
 				self.coords[point].update_value(**values)
+
+		# !TODO: send a signal to stop the event loop
+		def take_action(self):
+				if self.event_control == False:
+						self.event_control = True
+						proc = Process(target=self.__launch_async_proc)
+						proc.start()
+				# Attach it
+
