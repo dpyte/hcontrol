@@ -76,7 +76,7 @@ void writef(const HC::Point point, const std::array<unsigned int, 2> &coord, con
 }
 
 bool hc_check_zeros_in_x_y_z(const hc_axis_arr &axis) {
-	return axis[0] == 0.0f || axis[1] == 0.0f || axis[2] == 0.0f;
+	return (axis[0] == 0.0f || axis[1] == 0.0f || axis[2] == 0.0f);
 }
 } // namespace
 
@@ -121,7 +121,7 @@ void HC::HandLocation::update_values(const pyb::dict &updated_values) {
 		axis = extract_pyb_axis(raw_und_axis);
 
 		auto coordinates_ptr = coordinates[point].get();
-		update &= hc_check_zeros_in_x_y_z(axis);
+		update &= (!hc_check_zeros_in_x_y_z(axis));
 		if (update) {
 			coordinates_ptr->append(coordnts, axis);
 			if (coordinates_write_out) writef(point, coordnts, axis);

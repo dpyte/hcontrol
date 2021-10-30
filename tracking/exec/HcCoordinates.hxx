@@ -13,7 +13,10 @@ private:
 	const Point point;
 	std::array<unsigned int, 2> coordinates;
 	hc_axis_arr axis;
-	double *change = nullptr;
+	double change;
+
+	// To update when it is performing an initial run
+	bool delta_requires_update = false;
 	bool update_to_new_position = false;
 
 public:
