@@ -63,6 +63,21 @@ if (CCACHE_PROGRAM)
 	set_property (GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif ()
 
+# Check for SIMD instructions
+include (CheckCXXCompilerFlag)
+include (CheckIncludeFile)
+
+check_cxx_compiler_flag ("-march=native" HAS_NATIVE_SUPPORT)
+
+check_include_file ("float.h;stdlib.h;string.h" STDC_HEADERS)
+check_include_file ("xmmintrin.h" HAVE_XMMINTRIN_H)
+check_include_file ("immintrin.h" HAVE_IMMINTRIN_H)
+
+
+if (HAS_NATIVE_SUPPORT)
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+endif ()
+
 # Make executable available within the build directory
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 

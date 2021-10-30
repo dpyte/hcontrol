@@ -1,0 +1,5 @@
+
+Idea is to train a model to train a model that can scan for change in hand, frame by frame, and generate an output based on that.
+
+At first, I was thinking on using landmarks to calculate the motion however, that results in consistent usage of CPU required to perform calculations unless I use an optimized algorithm and proper utilization of CPU cache.
+Using an inference engine, in theory, should decrease the system load.

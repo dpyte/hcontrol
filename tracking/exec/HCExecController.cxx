@@ -1,8 +1,9 @@
+
+#include <fstream>
 #include <functional>
 #include <future>
 #include <map>
 #include <thread>
-#include <fstream>
 
 #include "HcConfig.hxx"
 #include "HCExecController.hxx"
@@ -17,14 +18,14 @@ HC::Point map_value(unsigned int value) {
 }
 
 std::array<unsigned int, 2> extract_pyb_coordinates(const pyb::tuple &coord) {
-	std::array<unsigned int, 2> retval;
+	std::array<unsigned int, 2> retval {};
 	retval[1] = coord[1].cast<unsigned int>();
 	retval[0] = coord[0].cast<unsigned int>();
 	return retval;
 }
 
-std::array<float, 3> extract_pyb_axis(const pyb::list &raw_axis) {
-	std::array<float, 3> retval;
+hc_axis_arr extract_pyb_axis(const pyb::list &raw_axis) {
+	hc_axis_arr retval {};
 	retval[0] = raw_axis[0].cast<float>();
 	retval[1] = raw_axis[1].cast<float>();
 	retval[2] = raw_axis[2].cast<float>();
@@ -63,7 +64,7 @@ bool find_within_registered_points(unsigned int pt) {
 	return search != registered_landmark_points.end();
 }
 
-void writef(const HC::Point point, const std::array<unsigned int, 2> &coord, const std::array<float, 3> &arr) {
+void writef(const HC::Point point, const std::array<unsigned int, 2> &coord, const hc_axis_arr &arr) {
 	std::ofstream file;
 	file.open("COORDINATES.txt", std::ofstream::out | std::ofstream::app);
 	file << point << ',' << coord[0]
@@ -74,6 +75,9 @@ void writef(const HC::Point point, const std::array<unsigned int, 2> &coord, con
 	file.close();
 }
 
+bool hc_check_zeros_in_x_y_z(const hc_axis_arr &axis) {
+	return axis[0] == 0.0f || axis[1] == 0.0f || axis[2] == 0.0f;
+}
 } // namespace
 
 
@@ -82,34 +86,45 @@ void HC::HandLocation::enable_coordinates_write_out() {
 }
 
 void HC::HandLocation::async_controller() {
-while (!recv_terminate_signal) {
-	for (const auto &registered_landmarks: registered_landmark_pinouts) {
-
+	while (!recv_terminate_signal) {
+		// No need to calculate the change since the values will be updated if only if there's a defined change in them
+		for (const auto &registered_landmarks: registered_landmark_pinouts) {
+			auto value =  coordinates[registered_landmarks].get();
+		}
+		std::this_thread::sleep_for(std::chrono::microseconds(1));
 	}
-	std::this_thread::sleep_for(std::chrono::microseconds(1));
-}
 }
 
 void HC::HandLocation::update_values(const pyb::dict &updated_values) {
-Point point;
-std::array<unsigned int, 2> coordnts;
-	std::array<float, 3> axis;
-	for (const auto &it: updated_values) {
-		auto const key = std::string(pyb::str(it.first));
-		if (key == "point") {
-			auto const raw_uint_point = std::stoi(std::string(pyb::str(it.second)));
-			point = map_value(raw_uint_point);
-		} else if (key == "coordinates") {
-			auto const raw_und_coord = pyb::cast<pyb::tuple>(it.second);
-			coordnts = extract_pyb_coordinates(raw_und_coord);
-		} else if (key == "axis") {
-			auto const raw_und_axis = pyb::cast<pyb::list>(it.second);
-			axis = extract_pyb_axis(raw_und_axis);
-		}
-		if (coordinates.find(point) != coordinates.end()) {
-			auto coorinates_ptr = coordinates[point].get();
-			coorinates_ptr->append(coordnts, axis);
-			if (coordinates_write_out && find_within_registered_points(point)) writef(point, coordnts, axis);
+	Point point;
+	std::array<unsigned int, 2> coordnts;
+	hc_axis_arr axis;
+	bool update = false;
+
+	auto it = updated_values.begin();
+	auto key = std::string(pyb::str(*it->first));
+	if (key == "point") {
+		hc_auto raw_uint_point = std::stoi(std::string(pyb::str(*it->second)));
+		point = map_value(raw_uint_point);
+		update = find_within_registered_points(point);
+	}
+
+	// Just assume that the data is in right order
+	if (update) {
+		// Next is coordinates
+		key = std::string(pyb::str(*(++it)->first));
+		hc_auto raw_und_coord = pyb::cast<pyb::tuple>(*it->second);
+		coordnts = extract_pyb_coordinates(raw_und_coord);
+
+		key = std::string(pyb::str(*(++it)->first));
+		hc_auto raw_und_axis = pyb::cast<pyb::list>(*it->second);
+		axis = extract_pyb_axis(raw_und_axis);
+
+		auto coordinates_ptr = coordinates[point].get();
+		update &= hc_check_zeros_in_x_y_z(axis);
+		if (update) {
+			coordinates_ptr->append(coordnts, axis);
+			if (coordinates_write_out) writef(point, coordnts, axis);
 		}
 	}
 }
