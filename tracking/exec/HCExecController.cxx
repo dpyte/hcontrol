@@ -97,7 +97,7 @@ void HC::HandLocation::async_controller() {
 
 void HC::HandLocation::update_values(const pyb::dict &updated_values) {
 	Point point;
-	std::array<unsigned int, 2> coordnts;
+	std::array<unsigned int, 2> coordnts {};
 	hc_axis_arr axis;
 	bool update = false;
 
@@ -112,11 +112,9 @@ void HC::HandLocation::update_values(const pyb::dict &updated_values) {
 	// Just assume that the data is in right order
 	if (update) {
 		// Next is coordinates
-		key = std::string(pyb::str(*(++it)->first));
 		hc_auto raw_und_coord = pyb::cast<pyb::tuple>(*it->second);
 		coordnts = extract_pyb_coordinates(raw_und_coord);
 
-		key = std::string(pyb::str(*(++it)->first));
 		hc_auto raw_und_axis = pyb::cast<pyb::list>(*it->second);
 		axis = extract_pyb_axis(raw_und_axis);
 
