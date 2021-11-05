@@ -40,3 +40,5 @@ a.out
 config.json
 compile_commands.json
 .sconsign.dblite
+compile_commands.json
+trainer/jupyter/pixel_values
