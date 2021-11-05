@@ -38,6 +38,8 @@ location = HC.HandLocation()
 """
 
 location.take_action()
+location.enable_coordinates_write_out()
+
 
 def extract_coordinates_from_hand_landmark(hands, lm, i_width, i_height):
 		for point in hands.HandLandmark:
@@ -59,7 +61,7 @@ def extract_coordinates_from_hand_landmark(hands, lm, i_width, i_height):
 				# Z -> Back & foreword
 				values = {
 						"point": int(point),
-						"coordinates": (coordinated),
+						"coordinates": coordinated,
 						"axis": [normalize.x, normalize.y, normalize.z]
 				}
 				location.update_values(values)

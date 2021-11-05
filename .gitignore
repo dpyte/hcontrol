@@ -5,6 +5,7 @@
 .ccls
 .vim
 
+trainer/img
 feed/build
 build
 *.mp4
@@ -15,6 +16,8 @@ venv
 a.out
 .hypothesis
 
+*.xml
+*.png
 *.dylib
 *.DSYM
 *.d

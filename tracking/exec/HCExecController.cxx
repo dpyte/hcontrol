@@ -40,6 +40,11 @@ std::array<HC::Point, 13> registered_landmark_pinouts = {
 	// Thumb
 	map_value(2),
 	map_value(1),
+	// Index
+	map_value(8),
+	map_value(7),
+	map_value(6),
+	map_value(5),
 	// Mid
 	map_value(10),
 	map_value(9),
@@ -49,6 +54,11 @@ std::array<HC::Point, 13> registered_landmark_pinouts = {
 };
 
 std::map<unsigned int, HC::Point> registered_landmark_points = {
+	std::make_pair(8, static_cast<HC::Point>(8)),
+	std::make_pair(7, static_cast<HC::Point>(7)),
+	std::make_pair(6, static_cast<HC::Point>(6)),
+	std::make_pair(5, static_cast<HC::Point>(5)),
+
 	std::make_pair(0, static_cast<HC::Point>(0)),
 	std::make_pair(5, static_cast<HC::Point>(5)),
 	std::make_pair(6, static_cast<HC::Point>(6)),
@@ -66,6 +76,7 @@ bool find_within_registered_points(unsigned int pt) {
 void writef(const HC::Point point, const std::array<unsigned int, 2> &coord, const std::array<float, 3> &arr) {
 	std::ofstream file;
 	file.open("COORDINATES.txt", std::ofstream::out | std::ofstream::app);
+	if (coord[0] > 300 || coord[1] > 300 || arr[0] > 1.0f || arr[1] > 1.0f || arr[2] > 1.0f) return;
 	file << point << ',' << coord[0]
 		<< ',' << coord[1]
 		<< ',' << arr[0]
@@ -92,8 +103,8 @@ while (!recv_terminate_signal) {
 
 void HC::HandLocation::update_values(const pyb::dict &updated_values) {
 Point point;
-std::array<unsigned int, 2> coordnts;
-	std::array<float, 3> axis;
+	std::array<unsigned int, 2> coordnts{};
+	std::array<float, 3> axis{};
 	for (const auto &it: updated_values) {
 		auto const key = std::string(pyb::str(it.first));
 		if (key == "point") {
@@ -109,7 +120,7 @@ std::array<unsigned int, 2> coordnts;
 		if (coordinates.find(point) != coordinates.end()) {
 			auto coorinates_ptr = coordinates[point].get();
 			coorinates_ptr->append(coordnts, axis);
-			if (coordinates_write_out && find_within_registered_points(point)) writef(point, coordnts, axis);
+			if (coordinates_write_out) writef(point, coordnts, axis);
 		}
 	}
 }

@@ -19,14 +19,14 @@ void HC::Coordinates::append(const std::array<unsigned int, 2> &coord, const std
 	// 	<< "axis[1]: " << plot_values[1] << '\n'
 	// 	<< "axis[2]: " << plot_values[2] << '\n';
 
-	coordinates = coord;
-	hc_vec vec = {
-		std::make_pair(axis[0], plot_values[0]),
-		std::make_pair(axis[1], plot_values[1]),
-		std::make_pair(axis[2], plot_values[2]),
-	};
+	// coordinates = coord;
+	// hc_vec vec = {
+	// 	std::make_pair(axis[0], plot_values[0]),
+	// 	std::make_pair(axis[1], plot_values[1]),
+	// 	std::make_pair(axis[2], plot_values[2]),
+	// };
 
-	axis = plot_values;
+	// axis = plot_values;
 	// Update only if the calculated difference is >= 7x folds
 }
 
