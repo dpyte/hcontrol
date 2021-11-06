@@ -1,4 +1,6 @@
 #!/bin/env python
+# -*- coding: utf-8 -*-
+
 import glob
 import os
 
@@ -72,24 +74,21 @@ def roi(frame, vert):
 				vert[2][0], vert[2][1],
 				vert[3][0], vert[3][1]
 		))
-		area = (vert[0][0], vert[0][1], vert[3][0], vert[3][1])
+		area = (vert[0][0] - 8, vert[0][1] + 10, vert[3][0] + 6, vert[3][1] + 6)
 		cropped = frame.crop(area)
 		return cropped
 
 
 def capture_frame_window(axis):
 		"""
-			Capture frame of interest based on the chosen furthest coordinates
+				Capture frame of interest based on the chosen furthest coordinates
 		"""
-		p_0 = list(filter(lambda ax: ax['point'] == 18, axis))[0]['coordinates']
-		p_4 = list(filter(lambda ax: ax['point'] == 16, axis))[0]['coordinates']
-		p_12 = list(filter(lambda ax: ax['point'] == 8, axis))[0]['coordinates']
-		p_20 = list(filter(lambda ax: ax['point'] == 4, axis))[0]['coordinates']
-		# t_l = [p_4[0], p_12[1]]
-		# b_r = [p_20[0], p_0[1]]
-		# return t_l[1], b_r[1], t_l[0], b_r[0]
-		return [p_4[0], p_12[1]], [p_20[0], p_12[1]], \
-		       [p_4[0], p_0[1]], [p_20[0], p_0[1]]
+		p1 = list(filter(lambda ax: ax['point'] == 20, axis))[0]['coordinates']
+		p2 = list(filter(lambda ax: ax['point'] == 16, axis))[0]['coordinates']
+		p3 = list(filter(lambda ax: ax['point'] == 8, axis))[0]['coordinates']
+		p4 = list(filter(lambda ax: ax['point'] == 4, axis))[0]['coordinates']
+		return [p2[0], p3[1]], [p4[0], p3[1]], \
+		       [p2[0], p1[1]], [p4[0], p1[1]]
 
 
 def process_img(screen, data):
@@ -134,9 +133,7 @@ def extract_roi_from_image():
 								cv2.imshow('MP Hands', cv2.flip(image, 1))
 
 
-def init():
-		if USE_FRAME_CAPTURE:
-				process_from_big_data()
+def extract_roi_from_live():
 		SAVE_LOCATION = os.path.join(flloc, 'img/')
 		image_counter = 0
 		cap = cv2.VideoCapture(0)
@@ -180,6 +177,16 @@ def init():
 						if cv2.waitKey(5) & 0xFF == 27:
 								break
 		cap.release()
+
+
+def init():
+		if USE_FRAME_CAPTURE:
+				process_from_big_data()
+		else:
+				"""
+					Dump rest of the stuff in here
+				"""
+				extract_roi_from_live()
 
 
 if __name__ == '__main__':
