@@ -5,8 +5,8 @@ namespace HControl::Coordinates {
 enum Point {
 	Wrist = 0,
 	THUMB_CMC,
-	THUMB_IP,
 	THUMB_MCP,
+	THUMB_IP,
 	THUMB_TIP,
 	INDEX_FINGER_MCP,
 	INDEX_FINGER_PIP,

@@ -11,7 +11,7 @@
 namespace HC = HControl::Coordinates;
 
 namespace {
-constexpr hc_auto hc_change_folds = 5;
+constexpr hc_auto hc_change_folds = 2;
 
 template <typename T = unsigned int>
 inline T hc_squared(T t) { return static_cast<T>(t * t); }

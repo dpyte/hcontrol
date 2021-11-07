@@ -11,8 +11,8 @@ namespace HControl::Coordinates {
 class Coordinates {
 private:
 	const Point point;
-	hc_cord_arr coordinates{};
-	hc_axis_arr axis{};
+	hc_axis_arr axis {};
+	hc_cord_arr coordinates {};
 
 	// To update when it is performing an initial run
 	bool delta_requires_update = false;

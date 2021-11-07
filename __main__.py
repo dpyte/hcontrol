@@ -77,7 +77,8 @@ def init():
 												mp_drawing_styles.get_default_hand_landmarks_style(),
 												mp_drawing_styles.get_default_hand_connections_style()
 										)
-						print('Current angle: {:.4f}'.format(location.hc_delta_theta()))
+						theta = location.hc_delta_theta()
+						print('angle: {}'.format(theta))
 						cv2.imshow('HC Hands', cv2.flip(img, 1))
 						if cv2.waitKey(5) & 0xFF == 27:
 								break
