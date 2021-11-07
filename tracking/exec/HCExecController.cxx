@@ -61,6 +61,15 @@ void writef(const HC::Point point, const std::array<unsigned int, 2> &coord,
 inline bool hc_check_for_of(const hc_axis_arr &arr) {
 	return !(arr[0] > 1 || arr[1] > 1 || arr[2] > 1);
 }
+
+hc_axis_arr hc_slope(const hc_axis_arr &begin, const hc_axis_arr &end) {
+	hc_axis_arr retval {
+		end[0] - begin[0],
+		end[1] - begin[1],
+	};
+	return retval;
+}
+
 } // namespace
 
 void HC::HandLocation::update_values(const pyb::list &updated_values) {
@@ -97,22 +106,33 @@ void HC::HandLocation::update_values(const pyb::list &updated_values) {
 			if (coordinates_write_out)
 				writef(point, coords, axis);
 		}
-		if (point == THUMB_CMC && update && (axis_lock_counter % 2 == 0)) {
-			std::cerr << "Locked axis: " << axis[0] << ' ' << axis[1] << '\n';
-			locked_thumb_mcm = axis;
-			axis_lock_counter++;
-		}
+		if (point == THUMB_CMC && update && !axis_lock_counter) locked_thumb_mcm = axis;
+		if (point == Wrist && update && !axis_lock_counter) locked_wrist = axis;
+	}
+
+	if (!axis_lock_counter) {
+		hc_auto wrst = wrist->axis_points();
+		hc_auto thmb = thumb_cmc->axis_points();
+		lock_slope = hc_slope(wrst, thmb);
+		axis_lock_counter = true;
 	}
 
 	if (axis_pass_count == 6) {
 		hc_auto thmcm = thumb_cmc->axis_points();
-		// std::fprintf(stderr, "[%0.4f, %0.4f] [%0.4f, %0.4f]\n",
-		// 		locked_thumb_mcm[0], locked_thumb_mcm[1], thmcm[0], thmcm[1]);
-		hc_auto uv = (locked_thumb_mcm[0] * thmcm[0]) + (locked_thumb_mcm[1] * thmcm[1]);
+		hc_auto wrst = wrist->axis_points();
+		hc_auto axis_slope = hc_slope(wrst, thmcm);
+
+		hc_auto rise = locked_wrist[1] + axis_slope[1];
+		hc_auto run  = rise + axis_slope[0];
+		hc_axis_arr const new_coords = {run, rise};
+
+		hc_auto uv = (locked_thumb_mcm[0] * new_coords[0]) + (locked_thumb_mcm[0] * new_coords[0]);
 		hc_auto u_component = std::sqrt(std::pow(locked_thumb_mcm[0], 2) + std::pow(locked_thumb_mcm[1], 2));
-		hc_auto v_component = std::sqrt(std::pow(thmcm[0], 2) + std::pow(thmcm[1], 2));
-		angle = std::acos(uv / (u_component * v_component));
-		std::fprintf(stderr, "Angle: %0.4f\n", angle);
+		hc_auto v_component = std::sqrt(std::pow(new_coords[0], 2) + std::pow(new_coords[1], 2));
+		angle = std::acos(uv / (u_component * v_component)) * 180.0 / HcPi;
+
+		std::fprintf(stderr, "slope: [%0.4f, %0.4f] [%0.4f, %0.4f] @ Angle [%0.4f]\n",
+				lock_slope[0], lock_slope[1], new_coords[0], new_coords[1], angle);
 	}
 }
 

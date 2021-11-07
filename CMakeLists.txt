@@ -76,6 +76,7 @@ check_include_file ("immintrin.h" HAVE_IMMINTRIN_H)
 
 if (HAS_NATIVE_SUPPORT)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
 endif ()
 
 # Make executable available within the build directory

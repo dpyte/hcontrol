@@ -42,8 +42,10 @@ private:
 	// Declare some variable where a perfect scan can be stored at.
 	// This will be used to measure angle of displacement
 
+	hc_axis_arr lock_slope {};
 	hc_axis_arr locked_thumb_mcm {};
-	int axis_lock_counter = 1;
+	hc_axis_arr locked_wrist {};
+	bool axis_lock_counter = false;
 	bool recv_terminate_signal = false;
 	bool coordinates_write_out = true;
 	float angle = 0.0f;
