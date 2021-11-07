@@ -5,7 +5,6 @@ import mediapipe as mp
 
 from build.tracking.exec import HandCoordinates as HC
 
-DEBUG = True
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -13,13 +12,6 @@ mp_hands = mp.solutions.hands
 location = HC.HandLocation()
 
 """
- Idea is to having an asynchronous thread that reads off the data from the
- init function and acts based on the collected data
-
- @take_async_action:
- in HandLocation can be used to trace and create a singular output
- based on the data collected over the period of n milliseconds
-
 	0: Wrist							1: THUMB_CMC					2: THUMB_IP
 	3: THUMB_MCP					4: THUMB_TIP					5: INDEX_FINGER_MCP
 	6: INDEX_FINGER_PIP		7: INDEX_FINGER_DIP		8: INDEX_FINGER_TIP
@@ -85,8 +77,8 @@ def init():
 												mp_drawing_styles.get_default_hand_landmarks_style(),
 												mp_drawing_styles.get_default_hand_connections_style()
 										)
-						if DEBUG:
-								cv2.imshow('HC Hands', cv2.flip(img, 1))
+						print('Current angle: {:.4f}'.format(location.hc_delta_theta()))
+						cv2.imshow('HC Hands', cv2.flip(img, 1))
 						if cv2.waitKey(5) & 0xFF == 27:
 								break
 		cap.release()

@@ -11,7 +11,7 @@ namespace HControl::Coordinates {
 class Coordinates {
 private:
 	const Point point;
-	std::array<unsigned int, 2> coordinates{};
+	hc_cord_arr coordinates{};
 	hc_axis_arr axis{};
 
 	// To update when it is performing an initial run
@@ -21,10 +21,10 @@ private:
 public:
 	Coordinates();
 	explicit Coordinates(Point pt) noexcept;
-	void append(std::array<unsigned int, 2> const &coord, hc_axis_arr const &plot_values);
+	void append(hc_cord_arr const &coord, hc_axis_arr const &plot_values);
 
-	[[nodiscard]] bool hc_delta_ready() const;
 	[[nodiscard]] hc_axis_arr axis_points() const;
+	[[nodiscard]] hc_cord_arr coordinates_points() const;
 };
 
 }

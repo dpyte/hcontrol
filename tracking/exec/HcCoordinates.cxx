@@ -1,11 +1,9 @@
+#include <cmath>
 #include <iostream>
 
 #ifdef __x86_64__
 #	include <immintrin.h>
-#	define USING_INTRINSICS 1
 #endif
-
-#include <cmath>
 
 #include "HcCoordinates.hxx"
 #include "HcConfig.hxx"
@@ -13,12 +11,10 @@
 namespace HC = HControl::Coordinates;
 
 namespace {
+constexpr hc_auto hc_change_folds = 5;
 
-#if IGNORE_Z
-constexpr hc_auto hc_change_folds = 0.03f;
-#else
-constexpr hc_auto hc_change_folds = 0.07f;
-#endif
+template <typename T = unsigned int>
+inline T hc_squared(T t) { return static_cast<T>(t * t); }
 
 /**
  * Calculate magnitude to check how far it has traveled and (!TODO) check
@@ -30,16 +26,10 @@ constexpr hc_auto hc_change_folds = 0.07f;
  *
  * Ignore Z if it is way too far from the lock-in zone
  */
-
-inline double hc_delta_x_y_z(const hc_axis_arr &axis, const hc_axis_arr &old_axis) {
-	hc_auto x = std::pow(old_axis[0] - axis[0], 2);
-	hc_auto y = std::pow(old_axis[1] - axis[1], 2);
-#if IGNORE_Z
+inline unsigned int hc_delta_x_y(const hc_cord_arr &cord, const hc_cord_arr &old_cord) {
+	hc_auto x = hc_squared(old_cord[0] - cord[0]);
+	hc_auto y = hc_squared(old_cord[1] - cord[1]);
 	hc_auto vect_mag = std::sqrt(x + y);
-#else
-	hc_auto z = std::pow(old_axis[2] - axis[2], 2);
-	hc_auto vect_mag = std::sqrt(x + y + z);
-#endif
 	return vect_mag;
 }
 } // anon ns
@@ -47,28 +37,18 @@ inline double hc_delta_x_y_z(const hc_axis_arr &axis, const hc_axis_arr &old_axi
 HC::Coordinates::Coordinates(HControl::Coordinates::Point pt) noexcept
 	:point(pt) {}
 
-using hc_vec = std::array<std::pair<double, double>, 3>;
-// Average Time: 1.95 seconds
-// Sleep Time: 1-E6 seconds
 void HC::Coordinates::append(const std::array<unsigned int, 2> &coord, hc_axis_arr const &plot_values) {
-	coordinates = coord;
-	auto update_value = hc_delta_x_y_z(plot_values, axis);
+	auto update_value = hc_delta_x_y(coord, coordinates);
 	update_to_new_position = update_value >= hc_change_folds;
-
-	// Update only if the calculated difference is >= 7x folds
-	// Although this value is development approximation therefore it can change to something else
 	if (update_to_new_position) {
-		// fprintf(stderr, "[%-3f, %-3f, %-3f] updated to [%-3f, %-3f, %-3f]\n",
-		// 		axis[0], axis[1], axis[2], plot_values[0], plot_values[1], plot_values[2]);
+		// std::fprintf(stderr, "updating [%d, %d] to [%d, %d]\n", coordinates[0], coordinates[1], coord[0], coord[1]);
+		coordinates = coord;
 		axis = plot_values;
 		delta_requires_update = true;
 	}
 }
 
-bool HC::Coordinates::hc_delta_ready() const {
-	return update_to_new_position;
-}
+hc_axis_arr HC::Coordinates::axis_points() const { return axis; }
 
-hc_axis_arr HC::Coordinates::axis_points() const {
-	return axis;
-}
+hc_cord_arr HC::Coordinates::coordinates_points() const { return coordinates; }
+

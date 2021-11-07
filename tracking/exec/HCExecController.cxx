@@ -29,6 +29,9 @@ HC::Point map_value(T value) {
 	return {};
 }
 
+template <typename T = double>
+inline T hc_squared(T exp) { return exp * exp; }
+
 std::array<unsigned int, 2> extract_pyb_coordinates(const pyb::tuple &coord) {
 	std::array<unsigned int, 2> retval{};
 	retval[0] = coord[0].cast<unsigned int>();
@@ -62,23 +65,18 @@ inline bool hc_check_for_of(const hc_axis_arr &arr) {
 	return !(arr[0] > 1 || arr[1] > 1 || arr[2] > 1);
 }
 
-hc_axis_arr hc_slope(const hc_axis_arr &begin, const hc_axis_arr &end) {
-	hc_axis_arr retval {
-		end[0] - begin[0],
-		end[1] - begin[1],
-	};
+hc_cord_arr hc_slope(hc_cord_arr const &begin, hc_cord_arr const &end) {
+	hc_cord_arr retval { end[0] - begin[0], end[1] - begin[1] };
 	return retval;
 }
 
 } // namespace
 
 void HC::HandLocation::update_values(const pyb::list &updated_values) {
-	hc_auto wrist = coordinates[Wrist].get();
-	hc_auto thumb_cmc = coordinates[THUMB_CMC].get();
-	hc_auto idx_mcp = coordinates[INDEX_FINGER_MCP].get();
-	hc_auto mid_mcp = coordinates[MIDDLE_FINGER_MCP].get();
-
 	unsigned int axis_pass_count = 0;
+	hc_auto wrist = coordinates[Wrist].get();
+	hc_auto thumb_mcm = coordinates[THUMB_CMC].get();
+
 	for (hc_auto &it : updated_values) {
 		Point point;
 		std::array<unsigned int, 2> coords;
@@ -106,41 +104,39 @@ void HC::HandLocation::update_values(const pyb::list &updated_values) {
 			if (coordinates_write_out)
 				writef(point, coords, axis);
 		}
-		if (point == THUMB_CMC && update && !axis_lock_counter) locked_thumb_mcm = axis;
-		if (point == Wrist && update && !axis_lock_counter) locked_wrist = axis;
+		if (point == THUMB_CMC && update && !axis_lock_counter) locked_thumb_mcm = coords;
+		if (point == Wrist && update && !axis_lock_counter) locked_wrist = coords;
 	}
 
 	if (!axis_lock_counter) {
-		hc_auto wrst = wrist->axis_points();
-		hc_auto thmb = thumb_cmc->axis_points();
+		std::fprintf(stderr, "Old Coordinates: [%d, %d] [%d, %d]\n", locked_wrist[0], locked_wrist[1],
+				locked_thumb_mcm[0], locked_thumb_mcm[1]);
+		hc_auto wrst = wrist->coordinates_points();
+		hc_auto thmb = thumb_mcm->coordinates_points();
 		lock_slope = hc_slope(wrst, thmb);
 		axis_lock_counter = true;
 	}
 
 	if (axis_pass_count == 6) {
-		hc_auto thmcm = thumb_cmc->axis_points();
-		hc_auto wrst = wrist->axis_points();
+		hc_auto thmcm = thumb_mcm->coordinates_points();
+		hc_auto wrst  = wrist->coordinates_points();
 		hc_auto axis_slope = hc_slope(wrst, thmcm);
 
 		hc_auto rise = locked_wrist[1] + axis_slope[1];
 		hc_auto run  = rise + axis_slope[0];
-		hc_axis_arr const new_coords = {run, rise};
+		hc_cord_arr const new_coords = {run, rise};
 
 		hc_auto uv = (locked_thumb_mcm[0] * new_coords[0]) + (locked_thumb_mcm[0] * new_coords[0]);
 		hc_auto u_component = std::sqrt(std::pow(locked_thumb_mcm[0], 2) + std::pow(locked_thumb_mcm[1], 2));
 		hc_auto v_component = std::sqrt(std::pow(new_coords[0], 2) + std::pow(new_coords[1], 2));
-		angle = std::acos(uv / (u_component * v_component)) * 180.0 / HcPi;
+		angle = std::acos(uv / (u_component * v_component)) * (180.0 / HcPi) - 5;
 
-		std::fprintf(stderr, "slope: [%0.4f, %0.4f] [%0.4f, %0.4f] @ Angle [%0.4f]\n",
-				lock_slope[0], lock_slope[1], new_coords[0], new_coords[1], angle);
+		// std::fprintf(stderr, "slope: [%d, %d] [%d, %d] @ Angle [%0.4f]\n",
+		// 		lock_slope[0], lock_slope[1], new_coords[0], new_coords[1], angle);
 	}
 }
 
-float HC::HandLocation::hc_delta_theta() const {
-	return angle;
-}
+float HC::HandLocation::hc_delta_theta() const { return angle; }
 
-void HC::HandLocation::enable_coordinates_write_out() {
-	coordinates_write_out = true;
-}
+void HC::HandLocation::enable_coordinates_write_out() { coordinates_write_out = true; }
 

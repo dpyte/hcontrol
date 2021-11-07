@@ -18,35 +18,24 @@ private:
 	std::unordered_map<Point, std::shared_ptr<Coordinates>> coordinates = {
 		std::make_pair(Wrist, 			  std::make_shared<Coordinates>(Wrist)),
 		std::make_pair(THUMB_CMC,         std::make_shared<Coordinates>(THUMB_CMC)),
-		std::make_pair(THUMB_IP,          std::make_shared<Coordinates>(THUMB_IP)),
-		std::make_pair(THUMB_MCP,         std::make_shared<Coordinates>(THUMB_MCP)),
-		std::make_pair(THUMB_TIP,         std::make_shared<Coordinates>(THUMB_TIP)),
 		std::make_pair(INDEX_FINGER_MCP,  std::make_shared<Coordinates>(INDEX_FINGER_MCP)),
 		std::make_pair(INDEX_FINGER_PIP,  std::make_shared<Coordinates>(INDEX_FINGER_PIP)),
-		std::make_pair(INDEX_FINGER_DIP,  std::make_shared<Coordinates>(INDEX_FINGER_DIP)),
-		std::make_pair(INDEX_FINGER_TIP,  std::make_shared<Coordinates>(INDEX_FINGER_TIP)),
 		std::make_pair(MIDDLE_FINGER_MCP, std::make_shared<Coordinates>(MIDDLE_FINGER_MCP)),
 		std::make_pair(MIDDLE_FINGER_PIP, std::make_shared<Coordinates>(MIDDLE_FINGER_PIP)),
-		std::make_pair(MIDDLE_FINGER_DIP, std::make_shared<Coordinates>(MIDDLE_FINGER_DIP)),
 		std::make_pair(MIDDLE_FINGER_TIP, std::make_shared<Coordinates>(MIDDLE_FINGER_TIP)),
 		std::make_pair(RING_FINGER_MCP,   std::make_shared<Coordinates>(RING_FINGER_MCP)),
 		std::make_pair(RING_FINGER_PIP,   std::make_shared<Coordinates>(RING_FINGER_PIP)),
-		std::make_pair(RING_FINGER_DIP,   std::make_shared<Coordinates>(RING_FINGER_DIP)),
-		std::make_pair(RING_FINGER_TIP,   std::make_shared<Coordinates>(RING_FINGER_TIP)),
 		std::make_pair(PINKY_MCP,         std::make_shared<Coordinates>(PINKY_MCP)),
 		std::make_pair(PINKY_PIP,         std::make_shared<Coordinates>(PINKY_PIP)),
-		std::make_pair(PINKY_DIP,         std::make_shared<Coordinates>(PINKY_DIP)),
-		std::make_pair(PINKY_TIP,         std::make_shared<Coordinates>(PINKY_TIP)),
 	};
 
 	// Declare some variable where a perfect scan can be stored at.
 	// This will be used to measure angle of displacement
 
-	hc_axis_arr lock_slope {};
-	hc_axis_arr locked_thumb_mcm {};
-	hc_axis_arr locked_wrist {};
+	hc_cord_arr lock_slope {};
+	hc_cord_arr locked_thumb_mcm {};
+	hc_cord_arr locked_wrist {};
 	bool axis_lock_counter = false;
-	bool recv_terminate_signal = false;
 	bool coordinates_write_out = true;
 	float angle = 0.0f;
 
