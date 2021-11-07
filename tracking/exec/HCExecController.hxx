@@ -39,17 +39,23 @@ private:
 		std::make_pair(PINKY_TIP,         std::make_shared<Coordinates>(PINKY_TIP)),
 	};
 
+	// Declare some variable where a perfect scan can be stored at.
+	// This will be used to measure angle of displacement
+
+	hc_axis_arr lock_slope {};
+	hc_axis_arr locked_thumb_mcm {};
+	hc_axis_arr locked_wrist {};
+	bool axis_lock_counter = false;
 	bool recv_terminate_signal = false;
 	bool coordinates_write_out = true;
-	void async_controller();
+	float angle = 0.0f;
 
 public:
 	HandLocation() = default;
 	// Passing too many values into the function will became a major hassle I guess ...
-	void update_values(const pyb::dict &update_values);
+	void update_values(const pyb::list &update_values);
 	// Implement some sort of gaurd so that this function is only being called once ...
-	void take_action();
-
+	float hc_delta_theta() const;
 	void enable_coordinates_write_out();
 };
 }
@@ -57,7 +63,7 @@ public:
 PYBIND11_MODULE(HandCoordinates, m) {
 	pyb::class_<HControl::Coordinates::HandLocation>(m, "HandLocation").def(pyb::init<>())
 		.def("update_values", &HControl::Coordinates::HandLocation::update_values)
-		.def("take_action", &HControl::Coordinates::HandLocation::take_action)
+		.def("hc_delta_theta", &HControl::Coordinates::HandLocation::hc_delta_theta)
 		.def("enable_coordinates_write_out", &HControl::Coordinates::HandLocation::enable_coordinates_write_out);
 }
 

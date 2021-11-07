@@ -2,22 +2,29 @@
 #define HCCOORDINATES_HXX
 
 #include <array>
+
 #include "HcPoints.hxx"
+#include "HcConfig.hxx"
 
 namespace HControl::Coordinates {
+
 class Coordinates {
 private:
 	const Point point;
-	std::array<unsigned int, 2> coordinates;
-	std::array<float, 3> axis;
+	std::array<unsigned int, 2> coordinates{};
+	hc_axis_arr axis{};
+
+	// To update when it is performing an initial run
+	bool delta_requires_update = false;
 	bool update_to_new_position = false;
 
 public:
 	Coordinates();
 	explicit Coordinates(Point pt) noexcept;
-	void append(std::array<unsigned int, 2> const &coord, std::array<float, 3> const &plot_values);
+	void append(std::array<unsigned int, 2> const &coord, hc_axis_arr const &plot_values);
 
-	std::array<float, 3> axis_points() const;
+	[[nodiscard]] bool hc_delta_ready() const;
+	[[nodiscard]] hc_axis_arr axis_points() const;
 };
 
 }

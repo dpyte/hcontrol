@@ -1,21 +1,16 @@
 #!/bin/env python
 
-USE_BUILD_HC = True
-
 import cv2
 import mediapipe as mp
-if USE_BUILD_HC:
-	from build.tracking.exec import HandCoordinates as HC
 
+from build.tracking.exec import HandCoordinates as HC
 
 DEBUG = True
-
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 location = HC.HandLocation()
-
 
 """
  Idea is to having an asynchronous thread that reads off the data from the
@@ -25,9 +20,6 @@ location = HC.HandLocation()
  in HandLocation can be used to trace and create a singular output
  based on the data collected over the period of n milliseconds
 
-"""
-
-"""
 	0: Wrist							1: THUMB_CMC					2: THUMB_IP
 	3: THUMB_MCP					4: THUMB_TIP					5: INDEX_FINGER_MCP
 	6: INDEX_FINGER_PIP		7: INDEX_FINGER_DIP		8: INDEX_FINGER_TIP
@@ -37,39 +29,34 @@ location = HC.HandLocation()
 	18: PINKY_PIP					19: PINKY_DIP					20: PINKY_TIP
 """
 
-location.take_action()
-
 def extract_coordinates_from_hand_landmark(hands, lm, i_width, i_height):
-		for point in hands.HandLandmark:
-				normalize = lm.landmark[point]
-				coordinated = mp_drawing._normalized_to_pixel_coordinates(
-						normalize.x,
-						normalize.y,
-						i_width,
-						i_height
-				)
-				# if DEBUG != False:
-				# 		print('Point: {}\nCoordinates: {}\nLandmarks:\n{}'.format(
-				# 				point,
-				# 				coordinated,
-				# 				normalize)
-				# 		)
-				# X -> Left & Right
-				# Y -> Down & Up
-				# Z -> Back & foreword
-				values = {
-						"point": int(point),
-						"coordinates": (coordinated),
-						"axis": [normalize.x, normalize.y, normalize.z]
-				}
-				location.update_values(values)
+		data = []
+		try:
+				for point in hands.HandLandmark:
+						normalize = lm.landmark[point]
+						coordinated = mp_drawing._normalized_to_pixel_coordinates(
+								normalize.x,
+								normalize.y,
+								i_width,
+								i_height
+						)
+						values = {
+								"point": int(point),
+								"coordinates": coordinated,
+								"axis": [normalize.x, normalize.y, normalize.z]
+						}
+						# print('axis: {} {} {}\n'.format(normalize.x, normalize.y, normalize.z))
+						data.append(values)
+				location.update_values(data)
+		except Exception:
+				pass
 
 
 def init():
 		cap = cv2.VideoCapture(0)
 		with mp_hands.Hands(
-				min_detection_confidence=0.9,
-				min_tracking_confidence=0.5
+						min_detection_confidence=0.9,
+						min_tracking_confidence=0.5
 		) as hands:
 				while cap.isOpened():
 						succ, img = cap.read()
