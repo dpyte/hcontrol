@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Hand tracking application using MediaPipe and OpenCV."""
-
+from calibration.logic import Calibration
 from controls.tracking import HandTracker, BatchHandTracker
 
 DEBUG = True
@@ -11,6 +11,7 @@ def main():
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Hand Tracking with Optimized Python Backend')
+	parser.add_argument('--run-calibration', action='store_true', help='Update calibration data')
 	parser.add_argument('--no-debug', action='store_true', help='Disable debug visualization')
 	parser.add_argument('--no-fps', action='store_true', help='Disable FPS counter')
 	parser.add_argument('--camera', type=int, default=0, help='Camera device ID')
@@ -21,6 +22,12 @@ def main():
 	args = parser.parse_args()
 
 	try:
+		if args.run_calibration:
+			# No need to run further from here on
+			calibration = Calibration(0)
+			calibration.calibrate()
+			return None
+
 		if args.video:
 			# Batch processing mode
 			tracker = BatchHandTracker(debug=not args.no_debug, show_fps=not args.no_fps)

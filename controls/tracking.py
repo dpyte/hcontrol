@@ -11,23 +11,16 @@ import mediapipe as mp
 import numpy as np
 from mediapipe.tasks import python
 
+from capture.camera import initialize_capture_device, video_properties
 from controls.location import HandLocation
+from utils.constants import DEBUG, MIN_DETECTION_CONFIDENCE, MIN_TRACKING_CONFIDENCE, ESC_KEY, SHOW_FPS, \
+	MODEL_COMPLEXITY, MAX_NUM_HANDS, FRAME_WIDTH, FRAME_HEIGHT, FRAME_RATE
 
 # Import our optimized Python module instead of C++
 
 # Configuration
-DEBUG = True
-MIN_DETECTION_CONFIDENCE = 0.9
-MIN_TRACKING_CONFIDENCE = 0.5
-ESC_KEY = 27
-SHOW_FPS = True
 
 # 0=lite (fastest), 1=full (balanced), 2=heavy (most accurate)
-MODEL_COMPLEXITY: int = 1
-MAX_NUM_HANDS: int = 1
-
-FRAME_WIDTH: int = 640
-FRAME_HEIGHT: int = 480
 
 base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task', delegate=python.BaseOptions.Delegate.GPU)
 
@@ -190,7 +183,7 @@ class HandTracker:
 		# Optional: Set camera properties for better performance
 		cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 		cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
-		cap.set(cv2.CAP_PROP_FPS, 30)
+		cap.set(cv2.CAP_PROP_FPS, FRAME_RATE)
 
 		print("Starting hand tracking...")
 		print("Press ESC to exit")
@@ -268,16 +261,16 @@ class BatchHandTracker(HandTracker):
 		Returns:
 				Dictionary with processing statistics
 		"""
-		cap = cv2.VideoCapture(video_path)
-
+		cap = initialize_capture_device(video_path)
 		if not cap.isOpened():
 			raise RuntimeError(f"Failed to open video: {video_path}")
 
 		# Get video properties
-		fps = cap.get(cv2.CAP_PROP_FPS)
-		width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-		height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-		total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+		properties = video_properties()
+		fps = properties['fps'] if properties else 30
+		width = properties['width'] if properties else FRAME_WIDTH
+		height = properties['height'] if properties else FRAME_HEIGHT
+		total_frames = properties['total_frames'] if properties else 0
 
 		print(f"Processing video: {video_path}")
 		print(f"  Resolution: {width}x{height}")
