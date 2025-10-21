@@ -63,7 +63,7 @@ inline bool hc_check_for_of(const hc_axis_arr &arr) {
 }
 
 hc_axis_arr hc_slope(const hc_axis_arr &begin, const hc_axis_arr &end) {
-	hc_axis_arr retval {
+    const hc_axis_arr retval {
 		end[0] - begin[0],
 		end[1] - begin[1],
 	};
@@ -90,11 +90,11 @@ void HC::HandLocation::update_values(const pyb::list &updated_values) {
 
 		auto iter = dict_value.begin();
 		point = map_value(registered_point_value);
-		iter++;
+		++iter;
 		update &= find_within_registered_points(map_value(point));
 		if (update) {
 			coords = extract_pyb_coordinates(pyb::cast<pyb::tuple>(iter->second));
-			iter++;
+			++iter;
 			axis = extract_pyb_axis(pyb::cast<pyb::list>(iter->second));
 			update &= hc_check_for_of(axis);
 		}

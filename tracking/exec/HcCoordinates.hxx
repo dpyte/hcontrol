@@ -19,7 +19,6 @@ private:
 	bool update_to_new_position = false;
 
 public:
-	Coordinates();
 	explicit Coordinates(Point pt) noexcept;
 	void append(std::array<unsigned int, 2> const &coord, hc_axis_arr const &plot_values);
 

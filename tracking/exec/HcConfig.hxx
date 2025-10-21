@@ -1,8 +1,6 @@
 #ifndef HCCONFIG_HXX
 #define HCCONFIG_HXX
 
-
-
 #ifdef hc_auto
 #	undef hc_auto
 #endif
