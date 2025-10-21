@@ -17,6 +17,20 @@ PARENT_WINDOW_Y = int((SCREEN_HEIGHT - FRAME_HEIGHT) / 2)
 
 
 class Calibration(TrackingBase):
+	"""
+	Represents a calibration process for aligning physical and virtual points using a system of tracked hand
+	gestures in a structured three-point process.
+
+	This class is designed to handle the calibration process required for mapping real-world coordinates
+	to a virtual environment using hand tracking. It provides tools to assist the user in pointing at
+	specific positions on a reference plane and capturing the points with corresponding tracking data.
+
+	Attributes:
+	    SCREEN_TARGETS (List[Tuple[int, int]]): Predefined screen locations for calibration targets in
+	        relative coordinates of the screen resolution.
+	    CALIBRATION_TARGETS (List[Tuple[int, int]]): Predefined physical locations for calibration targets
+	        based on the dimensions of the tracking frame.
+	"""
 	SCREEN_TARGETS: List[Tuple[int, int]] = [
 		(int(SCREEN_WIDTH * 0.1), int(SCREEN_HEIGHT * 0.1)),
 		(int(SCREEN_WIDTH * 0.9), int(SCREEN_HEIGHT * 0.1)),
@@ -44,6 +58,21 @@ class Calibration(TrackingBase):
 		self.transform_matrix = None
 
 	def calibrate(self) -> bool:
+		"""
+		Calibrates the system using a three-point process: top-left, top-right, and center.
+
+		The method guides the user through a step-by-step calibration process where they
+		first point to specific areas and press 'c' to record the physical points. After
+		collecting all required points, it creates virtual points, builds calibration
+		data, computes transformation, and validates the calibration.
+
+		After successfully validating calibration, the method saves the calibration data
+		for future use. If calibration is not successful or incomplete, an appropriate
+		message is printed.
+
+		Returns:
+		    bool: True if calibration was successful and validated; False otherwise.
+		"""
 		print("=== Calibration Started ===")
 		print("Instructions:")
 		print("1. Point at top-left corner, press 'c'")
@@ -68,6 +97,16 @@ class Calibration(TrackingBase):
 			return False
 
 	def run(self):
+		"""
+		Runs the main loop for capturing video from the webcam and processes frames to calibrate hand positions
+		for a specified task. This function sets up the webcam, initializes a hand tracker, and processes video
+		frames to detect hand landmarks and their position. The calibration process is controlled via keyboard
+		input, enabling the user to capture specific calibration points when the required hand gesture is detected.
+
+		Raises:
+		    RuntimeError: If the camera fails to open.
+
+		"""
 		cap = cv2.VideoCapture(0)
 		if not cap.isOpened():
 			raise RuntimeError("Failed to open camera")
@@ -93,6 +132,7 @@ class Calibration(TrackingBase):
 					cv2.imshow('Calibration', cv2.flip(bgr, 1))
 					key = cv2.waitKey(1) & 0xFF
 					if hand_position is None and key == ord('c'):
+						print(hand_position)
 						print("DEBUG: 'c' was pressed, but no hand was detected in this frame.")
 					if key == ESC_KEY:
 						break
@@ -104,23 +144,61 @@ class Calibration(TrackingBase):
 			cv2.destroyAllWindows()
 
 	def get_index_finger_position(self, results, frame) -> Tuple[int, int] | None:
+		"""
+		Fetches the coordinates of the index finger (landmark 8) from the given hand landmarks if available.
+
+		This method processes detected hand landmarks to extract the position of the index finger point in
+		pixel coordinates based on the provided frame dimensions. If no hands or index finger landmark is
+		found in the input landmarks, the method returns None.
+
+		Parameters:
+		results (object): The detection results object containing hand landmarks.
+		frame (ndarray): The frame (image) used to define the spatial resolution of the landmarks.
+
+		Returns:
+		Tuple[int, int] | None: The pixel coordinates of the index finger's position as (x, y), or None
+		if the hand or index finger landmark does not exist.
+		"""
 		if not results.multi_hand_landmarks:
 			return None
 		height, width = frame.shape[:2]
 		for hand_landmarks in results.multi_hand_landmarks:
 			landmark_data = self.extract_landmark_data(hand_landmarks, width, height)
-			if 8 in landmark_data:
-				coords = landmark_data[8]['coordinates']
-				if coords:
-					return coords
+			coords = landmark_data[8]['coordinates']
+			if coords:
+				return coords
 		return None
 
 	def capture_calibration_point(self, hand_position):
+		"""
+		Captures a calibration point based on the provided hand position.
+
+		This function appends the given hand position to the list of physical
+		calibration points, prints a confirmation message with the current
+		target index, and then increments the target index.
+
+		Args:
+		    hand_position (Any): The position of the hand to be recorded for calibration.
+		"""
 		self.physpoints.append(hand_position)
 		print(f"[Ok] Captured point {self.current_target_index + 1}/3: {hand_position}")
 		self.current_target_index += 1
 
 	def draw_calibration_ui(self, frame, hand_position):
+		"""
+		Draws the calibration UI on the provided frame based on the target and the current state of
+		hand position during a calibration process. The function visually indicates both the active
+		target and completed targets within the calibration sequence.
+
+		Args:
+		    frame: The video frame where the calibration UI will be drawn.
+		           Must be a valid image matrix compatible with OpenCV.
+		    hand_position: The current position of the detected hand as a tuple of (x, y) coordinates.
+		                   Can be None to indicate no hand is detected.
+
+		Raises:
+		    None
+		"""
 		if self.current_target_index >= 3:
 			return
 		target = self.CALIBRATION_TARGETS[self.current_target_index]
@@ -139,6 +217,23 @@ class Calibration(TrackingBase):
 									cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
 	def extract_calibration_points(self, data, frame):
+		"""
+		Extracts calibration points from given hand landmark data and frame.
+
+		This method processes detected hand landmarks within the provided frame. It scales
+		the landmark positions relative to the frame dimensions and yields the corresponding
+		landmark data. If no valid landmark data is extracted, it will yield a fallback
+		value of None.
+
+		Yields:
+		    dict | None: Extracted landmark data as a dictionary or None if no valid
+		    data is available or after processing final cleanup.
+
+		Arguments:
+		    data: The object containing multiple hand landmarks detected in the frame.
+		    frame: The image frame from which landmarks are detected. It is expected
+		    to have a defined shape with height and width.
+		"""
 		height, width = frame.shape[:2]
 		try:
 			for hl in data.multi_hand_landmarks:
@@ -147,6 +242,21 @@ class Calibration(TrackingBase):
 			yield None
 
 	def smooth_points(self, points) -> Tuple[float, float]:
+		"""
+		Smooths the provided coordinates using a smoothing filter.
+
+		This method takes a tuple of coordinates from the input dictionary and applies
+		a smoothing function using an external filter object. It is useful for adjusting
+		or refining data points for further processing, ensuring the coordinates are smooth.
+
+		Parameters:
+		    points: dict
+		        A dictionary containing 'coordinates' as a key with a tuple of x and y
+		        coordinate values.
+
+		Returns:
+		    Tuple[float, float]: A tuple containing the smoothed x and y coordinate values.
+		"""
 		(x, y) = points['coordinates']
 		return self.filter.smooth(x, y)
 
