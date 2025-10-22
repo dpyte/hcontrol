@@ -2,22 +2,22 @@ from abc import abstractmethod, ABC
 from typing import List, Dict
 
 import cv2
+import mediapipe as mp
 import numpy as np
 from mediapipe.python.solutions.hands import Hands
 
 from controls.location import HandLocation
 from utils.constants import DEBUG, SHOW_FPS
 
-import mediapipe as mp
-
 
 class TrackingBase(ABC):
 	""" Hand tracking base class for custom implementations """
+
 	def __init__(
 		self,
-		debug:bool=DEBUG,
-		show_fps:bool=SHOW_FPS,
-		trace_drawing_hands:bool=False,
+		debug: bool = DEBUG,
+		show_fps: bool = SHOW_FPS,
+		trace_drawing_hands: bool = False,
 	):
 		self.debug = debug
 		self.show_fps = show_fps

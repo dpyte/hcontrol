@@ -10,32 +10,32 @@ from controls.types import Point
 
 class GestureState(Enum):
 	"""State machine states for gesture recognition."""
-	IDLE = auto()           # No hand detected or outside activation zone
-	READY = auto()          # Hand in activation zone, ready for gestures
-	HOVERING = auto()       # Pointer mode - controlling cursor position
-	PINCH_START = auto()    # Initial pinch detected
-	PINCH_HOLD = auto()     # Pinch maintained
-	DRAGGING = auto()       # Pinch + movement = drag
-	CLICKING = auto()       # Quick pinch = click
-	DOUBLE_CLICK_WAIT = auto()  # Waiting for second click
-	SCROLLING = auto()      # Two-finger scroll mode
-	ZOOM = auto()           # Pinch-to-zoom gesture
+	IDLE = auto()  # No hand detected or outside the activation zone
+	READY = auto()  # Hand in activation zone, ready for gestures
+	HOVERING = auto()  # Pointer mode - controlling cursor position
+	PINCH_START = auto()  # Initial pinch detected
+	PINCH_HOLD = auto()  # Pinch maintained
+	DRAGGING = auto()  # Pinch + movement = drag
+	CLICKING = auto()  # Quick pinch = click
+	DOUBLE_CLICK_WAIT = auto()  # Waiting for the second click
+	SCROLLING = auto()  # Two-finger scroll mode
+	ZOOM = auto()  # Pinch-to-zoom gesture
 
 
 class GestureType(Enum):
 	"""Recognized gesture types."""
 	NONE = auto()
-	HOVER = auto()          # Move cursor
-	CLICK = auto()          # Single click
-	DOUBLE_CLICK = auto()   # Double click
-	RIGHT_CLICK = auto()    # Hold + release
-	DRAG_START = auto()     # Begin dragging
-	DRAG_MOVE = auto()      # Continue dragging
-	DRAG_END = auto()       # End dragging
-	SCROLL = auto()         # Scroll gesture
-	ZOOM_IN = auto()        # Zoom in
-	ZOOM_OUT = auto()       # Zoom out
-	PALM_REST = auto()      # Hand rest position (deactivate)
+	HOVER = auto()  # Move cursor
+	CLICK = auto()  # Single click
+	DOUBLE_CLICK = auto()  # Double click
+	RIGHT_CLICK = auto()  # Hold + release
+	DRAG_START = auto()  # Begin dragging
+	DRAG_MOVE = auto()  # Continue dragging
+	DRAG_END = auto()  # End dragging
+	SCROLL = auto()  # Scroll gesture
+	ZOOM_IN = auto()  # Zoom in
+	ZOOM_OUT = auto()  # Zoom out
+	PALM_REST = auto()  # Hand rest position (deactivate)
 
 
 @dataclass
@@ -64,15 +64,14 @@ class HandMetrics:
 
 class ActivationZone:
 	"""Defines ergonomic activation zones to prevent gorilla arm."""
-
 	def __init__(
 		self,
 		min_y: float = 0.3,  # Minimum height (30% from bottom)
 		max_y: float = 0.7,  # Maximum height (70% from bottom)
-		min_x: float = 0.25, # Left boundary
-		max_x: float = 0.75, # Right boundary
-		min_z: float = -0.3, # Closer to camera
-		max_z: float = 0.1   # Further from camera
+		min_x: float = 0.25,  # Left boundary
+		max_x: float = 0.75,  # Right boundary
+		min_z: float = -0.3,  # Closer to camera
+		max_z: float = 0.1  # Further from camera
 	):
 		self.min_y = min_y
 		self.max_y = max_y
@@ -132,17 +131,14 @@ class GestureRecognizer:
 		self.double_click_window = double_click_window
 		self.movement_threshold = movement_threshold
 		self.stability_threshold = stability_threshold
-
 		# State tracking
 		self.current_state = GestureState.IDLE
 		self.previous_state = GestureState.IDLE
 		self.state_entry_time = time.time()
-
 		# History buffers
 		self.position_history: Deque = deque(maxlen=history_size)
 		self.pinch_history: Deque = deque(maxlen=history_size)
 		self.velocity_history: Deque = deque(maxlen=history_size)
-
 		# Gesture tracking
 		self.last_click_time: Optional[float] = None
 		self.pinch_start_time: Optional[float] = None
@@ -150,13 +146,16 @@ class GestureRecognizer:
 		self.gesture_events: List[GestureEvent] = []
 
 		# Ergonomic features
-		self.activation_zone = ActivationZone()
+		self.activation_zone = ActivationZone(
+			min_x=0.0, max_x=1.0,
+			min_y=0.0, max_y=1.0
+		)
 		self.rest_timeout = 10.0  # Seconds of inactivity before rest mode
 		self.last_activity_time = time.time()
 
 		# Smoothing
 		self.smoothed_position: Optional[Tuple[float, float]] = None
-		self.smoothing_factor = 0.7  # Higher = more smoothing
+		self.smoothing_factor = 0.9  # Higher = more smoothing
 
 	def update(self, landmarks: Dict, frame_width: int, frame_height: int) -> List[GestureEvent]:
 		"""
@@ -177,7 +176,7 @@ class GestureRecognizer:
 			return self.gesture_events
 
 		# Calculate hand metrics
-		metrics = self._calculate_hand_metrics(landmarks, frame_width, frame_height)
+		metrics = self._calculate_hand_metrics(landmarks)
 
 		# Update history
 		self.position_history.append(metrics.position[:2])
@@ -190,62 +189,39 @@ class GestureRecognizer:
 				self._add_event(GestureType.PALM_REST)
 			self._transition_to(GestureState.IDLE)
 			return self.gesture_events
-
-		# Update activity timestamp
 		self.last_activity_time = time.time()
-
-		# State machine processing
 		self._process_state_machine(metrics)
-
 		return self.gesture_events
 
 	def _calculate_hand_metrics(
 		self,
-		landmarks: Dict,
-		frame_width: int,
-		frame_height: int
+		landmarks: Dict
 	) -> HandMetrics:
 		"""Calculate comprehensive hand metrics from landmarks."""
-
-		# Get key landmarks
 		index_tip = landmarks.get(Point.INDEX_FINGER_TIP)
 		thumb_tip = landmarks.get(Point.THUMB_TIP)
 		wrist = landmarks.get(Point.Wrist)
 		middle_tip = landmarks.get(Point.MIDDLE_FINGER_TIP)
-
 		if not all([index_tip, thumb_tip, wrist]):
 			return HandMetrics(position=(0, 0, 0), in_activation_zone=False)
-
-		# Calculate pinch distance
 		pinch_distance = self._calculate_distance_3d(index_tip, thumb_tip)
-
-		# Use index finger tip as primary pointer
 		pointer_pos = (index_tip.x, index_tip.y, index_tip.z)
-
-		# Calculate velocity if we have history
 		velocity = (0.0, 0.0, 0.0)
 		if len(self.position_history) > 0:
 			prev_pos = self.position_history[-1]
-			dt = 1/30  # Assume 30 FPS
+			dt = 1 / 30  # Assume 30 FPS
 			velocity = (
 				(pointer_pos[0] - prev_pos[0]) / dt,
 				(pointer_pos[1] - prev_pos[1]) / dt,
 				0.0
 			)
-
-		# Calculate hand openness (distance between fingers)
 		hand_openness = 0.0
 		if middle_tip:
 			hand_openness = self._calculate_distance_3d(index_tip, middle_tip)
-
-		# Check activation zone
 		in_zone = self.activation_zone.is_in_zone(
 			pointer_pos[0], pointer_pos[1], pointer_pos[2]
 		)
-
-		# Calculate stability (low velocity = stable)
-		stability = 1.0 - min(1.0, math.sqrt(velocity[0]**2 + velocity[1]**2) * 10)
-
+		stability = 1.0 - min(1.0, math.sqrt(velocity[0] ** 2 + velocity[1] ** 2) * 10)
 		return HandMetrics(
 			position=pointer_pos,
 			velocity=velocity,
@@ -257,15 +233,11 @@ class GestureRecognizer:
 
 	def _process_state_machine(self, metrics: HandMetrics) -> None:
 		"""Process the state machine based on current metrics."""
-
 		is_pinching = metrics.pinch_distance < self.pinch_threshold
-		is_moving = math.sqrt(metrics.velocity[0]**2 + metrics.velocity[1]**2) > self.movement_threshold
+		is_moving = math.sqrt(metrics.velocity[0] ** 2 + metrics.velocity[1] ** 2) > self.movement_threshold
 		is_stable = metrics.stability_score > 0.8
-
 		current_time = time.time()
 		time_in_state = current_time - self.state_entry_time
-
-		# State transitions
 		if self.current_state == GestureState.IDLE:
 			if metrics.in_activation_zone:
 				self._transition_to(GestureState.READY)
@@ -276,14 +248,12 @@ class GestureRecognizer:
 			elif is_stable:
 				self._transition_to(GestureState.HOVERING)
 				self._add_hover_event(metrics)
-
 		elif self.current_state == GestureState.HOVERING:
 			if is_pinching:
 				self.pinch_start_time = current_time
 				self._transition_to(GestureState.PINCH_START)
 			else:
 				self._add_hover_event(metrics)
-
 		elif self.current_state == GestureState.PINCH_START:
 			if not is_pinching:
 				# Quick release = click
@@ -298,18 +268,16 @@ class GestureRecognizer:
 			elif time_in_state > self.click_time_threshold:
 				# Long hold = transition to hold state
 				self._transition_to(GestureState.PINCH_HOLD)
-
 		elif self.current_state == GestureState.PINCH_HOLD:
 			if not is_pinching:
 				# Release after hold = right-click
 				self._add_event(GestureType.RIGHT_CLICK, metrics.position[:2])
 				self._transition_to(GestureState.READY)
 			elif is_moving:
-				# Start dragging from hold
+				# Start dragging from the hold
 				self.drag_start_position = metrics.position[:2]
 				self._add_event(GestureType.DRAG_START, metrics.position[:2])
 				self._transition_to(GestureState.DRAGGING)
-
 		elif self.current_state == GestureState.DRAGGING:
 			if not is_pinching:
 				self._add_event(GestureType.DRAG_END, metrics.position[:2])
@@ -320,7 +288,6 @@ class GestureRecognizer:
 					metrics.position[:2],
 					velocity=metrics.velocity[:2]
 				)
-
 		elif self.current_state == GestureState.DOUBLE_CLICK_WAIT:
 			if time_in_state > self.double_click_window:
 				self._transition_to(GestureState.READY)
@@ -355,7 +322,6 @@ class GestureRecognizer:
 				self.smoothing_factor * self.smoothed_position[0] + (1 - self.smoothing_factor) * pos[0],
 				self.smoothing_factor * self.smoothed_position[1] + (1 - self.smoothing_factor) * pos[1]
 			)
-
 		self._add_event(
 			GestureType.HOVER,
 			self.smoothed_position,
@@ -393,7 +359,7 @@ class GestureRecognizer:
 		dx = p1.x - p2.x
 		dy = p1.y - p2.y
 		dz = p1.z - p2.z
-		return math.sqrt(dx**2 + dy**2 + dz**2)
+		return math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
 
 	def get_state_info(self) -> Dict:
 		"""Get current state information for debugging."""

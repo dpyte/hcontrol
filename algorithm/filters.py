@@ -1,5 +1,6 @@
-import time
 import math
+import time
+
 
 class OneEuroFilter:
 	# Adaptive smoothing (based on velocity)
@@ -30,7 +31,7 @@ class OneEuroFilter:
 		if dt <= 0:
 			dt = 1e-3  # bypass div-by-zero
 		elif dt > 1.0:
-			dt = 1.0   # should prevent giant lag jumps
+			dt = 1.0  # should prevent giant lag jumps
 		smooth_x, dx = self._filter_axis(raw_x, self.x_prev, self.dx_prev, dt)
 		smooth_y, dy = self._filter_axis(raw_y, self.y_prev, self.dy_prev, dt)
 		self.x_prev, self.y_prev = smooth_x, smooth_y

@@ -1,6 +1,5 @@
 import cv2
 
-
 _capture: None | cv2.VideoCapture = None
 
 

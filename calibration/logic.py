@@ -46,7 +46,7 @@ class Calibration(TrackingBase):
 		(int(FRAME_WIDTH * 0.9), int(FRAME_HEIGHT * 0.9))
 	]
 
-	def __init__(self, source: int|None=0):
+	def __init__(self, source: int | None = 0):
 		super().__init__(True, True, True)
 		self.all_points = []
 		self.calibration_data = []
@@ -127,7 +127,7 @@ class Calibration(TrackingBase):
 						continue
 					rgb, results = self.map_hand_landmarks(frame, hands)
 					bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-					hand_position = self.get_hand_coordinates(results, frame, 8) # 8: Index
+					hand_position = self.get_hand_coordinates(results, frame, 8)  # 8: Index
 					self.draw_calibration_ui(bgr, hand_position)
 					cv2.imshow('Calibration', cv2.flip(bgr, 1))
 					key = cv2.waitKey(1) & 0xFF
@@ -213,7 +213,7 @@ class Calibration(TrackingBase):
 		for i in range(self.current_target_index):
 			completed_target = self.CALIBRATION_TARGETS[i]
 			cv2.circle(frame, completed_target, 60, (0, 255, 0), -1)
-			cv2.putText(frame, "OK", (completed_target[0]-20, completed_target[1]+10),
+			cv2.putText(frame, "OK", (completed_target[0] - 20, completed_target[1] + 10),
 									cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
 	def extract_calibration_points(self, data, frame):
