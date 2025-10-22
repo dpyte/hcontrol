@@ -46,7 +46,7 @@ class Calibration(TrackingBase):
 		(int(FRAME_WIDTH * 0.9), int(FRAME_HEIGHT * 0.9))
 	]
 
-	def __init__(self, source: int | None):
+	def __init__(self, source: int|None=0):
 		super().__init__(True, True, True)
 		self.all_points = []
 		self.calibration_data = []
@@ -86,14 +86,14 @@ class Calibration(TrackingBase):
 			self.compute_transformation()
 
 			if self.validate_calibration():
-				print("\n✓ Calibration successful!")
+				print("\n[Ok] Calibration successful!")
 				self.save_calibration()
 				return True
 			else:
-				print("\n✗ Calibration failed validation")
+				print("\n[Err] Calibration failed validation")
 				return False
 		else:
-			print(f"\n✗ Incomplete calibration ({len(self.physpoints)}/3 points)")
+			print(f"\n[Err] Incomplete calibration ({len(self.physpoints)}/3 points)")
 			return False
 
 	def run(self):
@@ -127,7 +127,7 @@ class Calibration(TrackingBase):
 						continue
 					rgb, results = self.map_hand_landmarks(frame, hands)
 					bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-					hand_position = self.get_index_finger_position(results, frame)
+					hand_position = self.get_hand_coordinates(results, frame, 8) # 8: Index
 					self.draw_calibration_ui(bgr, hand_position)
 					cv2.imshow('Calibration', cv2.flip(bgr, 1))
 					key = cv2.waitKey(1) & 0xFF

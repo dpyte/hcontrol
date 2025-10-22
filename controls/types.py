@@ -1,3 +1,4 @@
+import dataclasses
 from enum import IntEnum
 
 
@@ -26,7 +27,18 @@ class Point(IntEnum):
 	PINKY_TIP = 20
 
 
-IGNORE_Z = True  # Set to False to include Z-axis in calculations
+@dataclasses.dataclass
+class ExtractionPoints:
+	"""Extraction points for hand landmarks."""
+	palm: float = -1.0
+	thumb: float = -1.0
+	index: float = -1.0
+	middle: float = -1.0
+	ring: float = -1.0
+	pinky: float = -1.0
+
+
+IGNORE_Z = True  # Set too False to include Z-axis in calculations
 CHANGE_THRESHOLD = 0.03 if IGNORE_Z else 0.07
 
 TRACKED_POINTS = {

@@ -63,6 +63,7 @@ class TrackingBase(ABC):
 				landmark_data = self.extract_landmark_data(
 					hand_landmarks, width, height
 				)
+				# using this for dev. add an option to hide this in the release
 				self.hand_location.update_values(landmark_data)
 				if self.debug:
 					self.mp_drawing.draw_landmarks(
@@ -72,7 +73,6 @@ class TrackingBase(ABC):
 						self.mp_drawing_styles.get_default_hand_landmarks_style(),
 						self.mp_drawing_styles.get_default_hand_connections_style()
 					)
-					# Draw angle information
 					angle = self.hand_location.hc_delta_theta()
 					if angle > 0:
 						cv2.putText(
@@ -84,7 +84,6 @@ class TrackingBase(ABC):
 							(0, 255, 0),
 							2
 						)
-		# Add FPS counter if enabled
 		if self.show_fps:
 			self._update_fps()
 			cv2.putText(
@@ -107,10 +106,40 @@ class TrackingBase(ABC):
 		results = hands_processor.process(frame_rgb)
 		return frame_rgb, results
 
+	def get_hand_coordinates(self, results, frame, point: int):
+		"""
+		Returns the coordinates of a specified point from detected hand landmarks
+		in a video frame. This method processes the hand landmarks detected
+		via a hand-tracking module and retrieves the screen coordinates of the
+		requested point.
+
+		Parameters:
+		    results: The processed output containing detected hand landmarks
+		        from a detection model.
+		    frame: The video frame from which the landmarks were detected.
+		    point: int
+		        The index of the landmark point to retrieve coordinates for.
+
+		Returns:
+		    The coordinates of the specified point as a tuple of integers if
+		    found. Returns None if no hand landmarks are detected or if the
+		    point's coordinates are not available.
+		"""
+		if not results.multi_hand_landmarks:
+			return None
+		height, width = frame.shape[:2]
+		for hand_landmarks in results.multi_hand_landmarks:
+			landmark_data = self.extract_landmark_data(hand_landmarks, width, height)
+			if landmark_data is None or point > len(landmark_data):
+				continue
+			coords = landmark_data[point]['coordinates']
+			if coords:
+				return coords
+		return None
+
 	def _update_fps(self) -> None:
 		"""Update FPS counter."""
 		self.frame_count += 1
-
 		if self.frame_count % self.fps_update_interval == 0:
 			import time
 			current_time = time.time()

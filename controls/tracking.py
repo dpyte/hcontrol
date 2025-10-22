@@ -3,17 +3,14 @@
 Optimized hand tracking application using MediaPipe and OpenCV.
 Now uses pure Python HandCoordinates module for 10-20x better performance.
 """
-
-from typing import List, Dict, Optional, Callable
+from typing import Dict, Optional, Any, Generator
 
 import cv2
-import mediapipe as mp
-import numpy as np
 from mediapipe.tasks import python
 
 from capture.camera import initialize_capture_device, video_properties
-from controls.location import HandLocation
 from controls.tracking_base import TrackingBase
+from controls.types import ExtractionPoints
 from utils.constants import DEBUG, MIN_DETECTION_CONFIDENCE, MIN_TRACKING_CONFIDENCE, ESC_KEY, SHOW_FPS, \
 	MODEL_COMPLEXITY, MAX_NUM_HANDS, FRAME_WIDTH, FRAME_HEIGHT, FRAME_RATE
 
@@ -32,6 +29,7 @@ class HandTracker(TrackingBase):
 	def __init__(self, debug: bool = DEBUG, show_fps: bool = SHOW_FPS):
 		super().__init__(debug, show_fps, trace_drawing_hands=True)
 
+
 	def run(self, camera_id: int = 0) -> None:
 		"""
 		Main tracking loop.
@@ -44,7 +42,6 @@ class HandTracker(TrackingBase):
 		if not cap.isOpened():
 			raise RuntimeError(f"Failed to open camera {camera_id}")
 
-		# Optional: Set camera properties for better performance
 		cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 		cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 		cap.set(cv2.CAP_PROP_FPS, FRAME_RATE)
@@ -62,46 +59,41 @@ class HandTracker(TrackingBase):
 			) as hands:
 				while cap.isOpened():
 					success, frame = cap.read()
-
 					if not success:
 						print("Warning: Failed to read frame from camera")
 						continue
-
-					# Process frame
+					rgb, results = self.map_hand_landmarks(frame, hands)
 					processed_frame = self.process_frame(frame, hands)
+					points = self.extract_key_points(results, frame)
 
-					# Display if in debug mode
 					if self.debug:
-						cv2.imshow('Hand Tracking (Python)', cv2.flip(processed_frame, 1))
-
-					# Check for ESC key to exit
+						cv2.imshow('Hand Tracking', cv2.flip(processed_frame, 1))
 					key = cv2.waitKey(1) & 0xFF
 					if key == ESC_KEY:
 						break
-					elif key == ord('s'):
-						# Save screenshot
-						cv2.imwrite('hand_tracking_screenshot.png', processed_frame)
-						print("Screenshot saved!")
 					elif key == ord('p'):
-						# Print statistics
 						stats = self.hand_location.get_statistics()
 						print(f"\nStatistics: {stats}")
-
 		except KeyboardInterrupt:
 			print("\nTracking stopped by user")
-
 		finally:
-			# Cleanup
 			cap.release()
 			cv2.destroyAllWindows()
-
-			# Print final statistics
 			stats = self.hand_location.get_statistics()
 			print("\nFinal Statistics:")
 			print(f"  Total updates: {stats['update_count']}")
 			print(f"  Active landmarks: {stats['active_landmarks']}/21")
 			print(f"  Current angle: {stats['current_angle']:.2f}°")
 			print(f"  Average FPS: {self.fps:.1f}")
+
+	def extract_key_points(self, results, frame):
+		palm_pos  = self.get_hand_coordinates(results, frame, 0)
+		thumb_pos = self.get_hand_coordinates(results, frame, 4)
+		index_pos = self.get_hand_coordinates(results, frame, 8)
+		middle_pos = self.get_hand_coordinates(results, frame, 12)
+		ring_pos = self.get_hand_coordinates(results, frame, 16)
+		pinky_pos = self.get_hand_coordinates(results, frame, 20)
+		return ExtractionPoints(palm_pos, thumb_pos, index_pos, middle_pos, ring_pos, pinky_pos)
 
 
 class BatchHandTracker(HandTracker):
